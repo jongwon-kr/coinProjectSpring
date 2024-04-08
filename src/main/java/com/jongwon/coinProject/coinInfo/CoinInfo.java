@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 
 @Entity
 public class CoinInfo {
+
     @Id
     String market;  // coin code
     String introduction;    // coin introduction
