@@ -22,17 +22,14 @@ import java.util.List;
 
 @Service
 public class CoinInfoService {
-
     private static List<CoinInfo> coinInfos = new ArrayList<>();
 
     public static JSONArray getCoinList() throws IOException {
-        // 1. 장치에 요청할 URI를 입력한다.
         URL url = new URL("https://api.upbit.com/v1/market/all");
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
         con.setRequestProperty("Content-Type", "application/json");
 
-        // 2. Method 타입을 정의하고 API를 전송한다.
         con.setRequestMethod("GET");
         con.getResponseCode();
 
@@ -172,6 +169,4 @@ public class CoinInfoService {
         driver.quit();
         return coinInfo;
     }
-
-
 }
