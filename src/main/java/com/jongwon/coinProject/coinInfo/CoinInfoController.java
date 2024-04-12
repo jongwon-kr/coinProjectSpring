@@ -3,10 +3,8 @@ package com.jongwon.coinProject.coinInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -15,29 +13,53 @@ import java.util.List;
 public class CoinInfoController {
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
-
     private CoinInfoService coinInfoService;
+    private GetCoinInfoService getCoinInfoService;
     private CoinInfoRepository coinInfoRepository;
 
     @Autowired
-    public CoinInfoController(CoinInfoService coinInfoService, CoinInfoRepository coinInfoRepository) {
+    public CoinInfoController(CoinInfoService coinInfoService, GetCoinInfoService getCoinInfos, CoinInfoRepository coinInfoRepository) {
         this.coinInfoService = coinInfoService;
+        this.getCoinInfoService = getCoinInfos;
         this.coinInfoRepository = coinInfoRepository;
     }
 
-    @GetMapping("/get-coin-info/market={market}")
+    // 코인 정보 요청
+    @GetMapping("/coinInfo/market/{market}")
     public CoinInfo retrieveCoinInfo(@PathVariable String market) {
-        return coinInfoService.getCoinInfo(market);
+        if(!coinInfoRepository.findById(market).isEmpty()){
+            return coinInfoRepository.findById(market).get();
+        }else{
+            return getCoinInfoService.getCoinInfo(market);
+        }
     }
 
-    @PostMapping("/get-coin-infos")
-    public String retrieveCoinInfos() throws Exception {
-        logger.info("Start get Coin Infos");
-        List<CoinInfo> coinInfoList = coinInfoService.getCoinInfos();
-        for (CoinInfo coinInfo : coinInfoList) {
-            System.out.println("coinInfo.getMarket() = " + coinInfo.toString());
+    @DeleteMapping("/coinInfos/{market}")
+    public ResponseEntity<Void> deleteCoinInfo(@PathVariable String market) {
+        coinInfoRepository.deleteById(market);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/coinInfo/add/{market}")
+    public String addCoinInfo(@PathVariable String market) {
+        try {
+            CoinInfo coinInfo = getCoinInfoService.getCoinInfo(market);
+            coinInfoRepository.save(coinInfo);
+            return coinInfo.getMarket()+" 코인 정보 로딩 완료";
+        } catch (Exception e) {
+            return "에러 메시지: " + e.getMessage();
         }
-        logger.info("End get Coin Infos");
-        return "코인 정보 로딩 완료";
+    }
+
+    // 모든 코인 정보들 패치
+    @GetMapping("/coinInfos/fetch")
+    public String fetchCoinInfos() {
+        try {
+            List<CoinInfo> coinInfoList = getCoinInfoService.getCoinInfos();
+            coinInfoList.stream().forEach(coinInfo -> coinInfoRepository.save(coinInfo));
+            return "모든 코인 정보 로딩 완료";
+        } catch (Exception e) {
+            return "에러 메시지: " + e.getMessage();
+        }
     }
 }
